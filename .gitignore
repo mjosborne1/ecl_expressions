@@ -187,3 +187,6 @@ Temporary Items
 
 # Keep ecl_library directory and its contents under source control
 # (no exclusions needed - it will be tracked by default)
+
+# Application-specific ignores
+logs/

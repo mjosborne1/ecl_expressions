@@ -8,34 +8,81 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def count_valueset(vs_endpoint, valueset_url):
+def write_bundle_data(endpoint, token, outfile):
     """
-    Count the total number of values in a ValueSet using a direct query 
-    pass parameter count=1 to trick the query into expanding and including the total 
-    even if it's >50K in size.
+    Write the syndicated bundles to outfile
     """
-    vsexp=vs_endpoint+'/ValueSet/$expand?url='
-    query=vsexp+parse.quote(valueset_url,safe='')
-    query = f"{query}&count=1"
+    headers = {
+        'Authorization': f"{token['token_type']} {token['access_token']}",
+        'Accept': 'application/fhir+json'
+    }
+    response = requests.get(endpoint, headers=headers)
+    with open(outfile, 'wb') as f:
+        f.write(response.content)
+
+
+def expand_valueset(vs_endpoint, ecl_expr, count):
+    """
+    Expand a ValueSet using ECL expression and return both total count and first N results
+    """
+    vsexp=vs_endpoint+'/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/'
+    query=vsexp+parse.quote(ecl_expr,safe='')
+    query = f"{query}&count={count}"
     command = ['curl', '-H "Accept: application/fhir+json" ' , '--location', query]
     
     result = subprocess.run(command, capture_output=True)
     data =  json.loads(result.stdout)
-    try:
-        total_result = evaluate(data,"expansion.total")
-    except Exception as e:
-        logger.error(f'Failed to retrieve total for ValueSet: {e}')
-        return -1
     
-    total = -1
-    if total_result:
-        # Handle the case where evaluate returns a list or a single value
-        if isinstance(total_result, list) and len(total_result) > 0:
-            total = total_result[0]
-        elif not isinstance(total_result, list):
-            total = total_result
-    return total
+    try:
+        # Get total count
+        total_result = evaluate(data,"expansion.total")
+        total = -1
+        if total_result:
+            if isinstance(total_result, list) and len(total_result) > 0:
+                total = total_result[0]
+            elif not isinstance(total_result, list):
+                total = total_result
+        
+        # Get the actual concept results
+        concepts = []
+        contains_result = evaluate(data, "expansion.contains")
+        if contains_result and isinstance(contains_result, list):
+            for concept in contains_result:
+                code = ""
+                display = ""
+                
+                # Extract code
+                code_result = evaluate(concept, "code")
+                if code_result:
+                    if isinstance(code_result, list) and len(code_result) > 0:
+                        code = str(code_result[0])
+                    elif not isinstance(code_result, list):
+                        code = str(code_result)
+                
+                # Extract display
+                display_result = evaluate(concept, "display")
+                if display_result:
+                    if isinstance(display_result, list) and len(display_result) > 0:
+                        display = str(display_result[0])
+                    elif not isinstance(display_result, list):
+                        display = str(display_result)
+                
+                if code:  # Only add if we have a code
+                    concepts.append({
+                        'code': code,
+                        'display': display or code  # Use code as fallback if no display
+                    })
+        
+        return {
+            'total': total,
+            'concepts': concepts
+        }
+        
+    except Exception as e:
+        logger.error(f'Failed to retrieve data for ValueSet: {e}')
+        return {
+            'total': -1,
+            'concepts': [],
+            'error': str(e)
+        }
 
-##
-def run_ecl_expansion():
-    return ""
