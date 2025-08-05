@@ -1,0 +1,4 @@
+# TPUUs that include both Trimethoprim and Sulfamethoxazole as active ingrediants
+^ 929360031000036100 |Trade product unit of use reference set|:
+    <<127489000 |Has active ingredient| = 363528007 |Sulfamethoxazole|,
+    <<127489000 |Has active ingredient| = 387179001 |Trimethoprim|

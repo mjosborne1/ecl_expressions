@@ -1,0 +1,4 @@
+# AMT V4 TPUU with Single active ingredient Trimethoprim
+^ 929360031000036100 |Trade product unit of use reference set|:
+    <<127489000 |Has active ingredient| = 387179001 | Trimethoprim |,
+    1142140007 | Count of active ingredient | = #1

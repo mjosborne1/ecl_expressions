@@ -1,0 +1,4 @@
+# TPUUs that contain ONLY either Dicloxacillin or Flucloxacillin
+^ 929360031000036100 |Trade product unit of use reference set|:
+    <<127489000 |Has active ingredient| = (372873001 |Dicloxacillin| or 387544009 |Flucloxacillin|),
+    1142140007 |Count of active ingredient| = #1

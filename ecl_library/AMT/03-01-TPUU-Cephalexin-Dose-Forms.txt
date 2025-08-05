@@ -1,0 +1,5 @@
+# Dose forms for TPUUs containing only Cephalexin
+(^ 929360031000036100 |Trade product unit of use reference set|:
+<<127489000 |Has active ingredient| = 387304003 |Cephalexin|,
+  1142140007 |Count of active ingredient| = #1)
+  . 411116001 |Has manufactured dose form|

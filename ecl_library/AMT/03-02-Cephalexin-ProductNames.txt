@@ -1,0 +1,5 @@
+# Product names from TPUUs that have only Cephalexin as an active ingrediant 
+(^ 929360031000036100 |Trade product unit of use reference set|:
+  <<127489000 |Has active ingredient| = 387304003 |Cephalexin|,
+  1142140007 |Count of active ingredient| = #1)
+  . 774158006 |Has product name|

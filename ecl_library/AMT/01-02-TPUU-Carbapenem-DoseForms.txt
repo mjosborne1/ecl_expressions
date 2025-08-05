@@ -1,0 +1,4 @@
+# TPUUs that have any Carbepenem or subtype active ingrediant that are injections.
+^ 929360031000036100 |Trade product unit of use reference set|: 
+    <<127489000 |Has active ingredient| = <<396345004 |Carbepenem| ,
+    411116001 |Has manufactured dose form| = << 129011000036109 |Injection|

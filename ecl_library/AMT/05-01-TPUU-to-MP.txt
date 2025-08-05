@@ -1,0 +1,6 @@
+# Trade Product Unit Use to Medicinal Product - Rapideine example
+(
+ (>> 54016011000036103|Rapideine uncoated tablet| AND ^ 929360061000036106|Medicinal product reference set|)
+ MINUS
+ (>(>> 54016011000036103|Rapideine uncoated tablet| AND ^ 929360061000036106| Medicinal product reference set |))
+)

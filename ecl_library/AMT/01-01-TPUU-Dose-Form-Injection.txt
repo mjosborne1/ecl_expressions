@@ -1,0 +1,3 @@
+# All TPUUs that have a manufactured dose form of injection and subtypes
+^ 929360031000036100 |Trade product unit of use reference set|:
+411116001 |Has manufactured dose form| = << 129011000036109 |Injection|

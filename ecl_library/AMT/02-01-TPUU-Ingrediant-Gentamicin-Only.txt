@@ -1,0 +1,5 @@
+# TPUUs with Gentamicin as only Active Ingrediant that have Dose form injection and subtypes
+(^ 929360031000036100 |Trade product unit of use reference set|:
+    <<127489000 |Has active ingredient| = 387321007 |Gentamicin|,
+  1142140007 |Count of active ingredient| = #1,
+    411116001 |Has manufactured dose form| = << 129011000036109 |Injection|)
