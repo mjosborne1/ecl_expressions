@@ -383,7 +383,9 @@
         }
 
         function selectSearchResult(filename) {
+            // Clear search interface
             hideSearchResults();
+            searchBox.value = '';
             
             // Show only the selected expression
             showFilteredExpressions([filename]);
@@ -393,8 +395,11 @@
             allExpressions.style.display = 'none';
             showAllButton.style.display = 'block';
             
-            // Clone matching expressions to filtered view
-            const containers = Array.from(document.querySelectorAll('.ecl-item'));
+            // Clear any existing filtered content first
+            filteredExpressions.innerHTML = '';
+            
+            // Clone matching expressions from the original list only
+            const containers = Array.from(allExpressions.querySelectorAll('.ecl-item'));
             const matchingContainers = containers.filter(container => 
                 filenames.includes(container.dataset.filename)
             );
