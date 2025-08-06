@@ -1,0 +1,5 @@
+# Procedures performed on both right and left sides (bilateral procedures)
+(< 71388002 |Procedure| : 
+  405813007 |Procedure site - Direct| = (*: 272741003 |Laterality| = (24028007 |Right|)), 
+  405813007 |Procedure site - Direct| = (*: 272741003 |Laterality| = (7771000 |Left|))
+)
