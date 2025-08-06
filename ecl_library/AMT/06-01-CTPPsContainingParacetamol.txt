@@ -1,0 +1,4 @@
+# Containered trade product packs with Paracetamol as an ingredient 
+^ 929360051000036108|Containered trade product pack reference set| :
+   774160008|Contains clinical drug| = ((^ 929360031000036100|Trade product unit of use reference set|):
+        <<127489000|Has active ingredient|= 387517004|Paracetamol|)

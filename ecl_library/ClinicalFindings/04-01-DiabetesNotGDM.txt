@@ -1,0 +1,6 @@
+# Types of Diabetes that are not subtypes of Gestational Diabetes
+(
+  < 73211009|Diabetes mellitus|
+) MINUS (
+  << 11687002|Gestational diabetes mellitus|
+)

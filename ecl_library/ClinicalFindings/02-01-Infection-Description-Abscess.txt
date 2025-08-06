@@ -1,0 +1,2 @@
+# Infectious diseases with a description matching abscess
+< 40733004|Infectious disease| AND (* {{ D term = "abscess" }})
