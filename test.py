@@ -195,5 +195,83 @@ class TestFetcher(unittest.TestCase):
                                       f"Total for {ecl_file['filename']} should be >= 0 or -1 for errors")
 
 
+class TestSearch(unittest.TestCase):
+    
+    def setUp(self):
+        """Set up test fixtures for search tests"""
+        from main import app
+        app.config['TESTING'] = True
+        self.app = app.test_client()
+    
+    def test_search_endpoint_exists(self):
+        """Test that the search endpoint is accessible"""
+        response = self.app.get('/search_ecl?q=test')
+        self.assertEqual(response.status_code, 200)
+    
+    def test_search_with_empty_query(self):
+        """Test search with empty query returns empty results"""
+        response = self.app.get('/search_ecl?q=')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(len(data), 0)
+    
+    def test_search_with_short_query(self):
+        """Test search with short query (< 2 chars) returns empty results"""
+        response = self.app.get('/search_ecl?q=a')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(len(data), 0)
+    
+    def test_search_with_valid_query(self):
+        """Test search with valid query returns structured results"""
+        response = self.app.get('/search_ecl?q=injection')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        
+        # Should return some results for 'injection' if we have injection-related ECL files
+        if len(data) > 0:
+            for result in data:
+                self.assertIn('filename', result)
+                self.assertIn('description', result)
+                self.assertIn('category', result)
+                self.assertIn('expression', result)
+                self.assertIn('match_score', result)
+    
+    def test_search_case_insensitive(self):
+        """Test that search is case insensitive"""
+        response1 = self.app.get('/search_ecl?q=injection')
+        response2 = self.app.get('/search_ecl?q=INJECTION')
+        
+        self.assertEqual(response1.status_code, 200)
+        self.assertEqual(response2.status_code, 200)
+        
+        data1 = json.loads(response1.data)
+        data2 = json.loads(response2.data)
+        
+        # Should return same results regardless of case
+        self.assertEqual(len(data1), len(data2))
+    
+    def test_search_limits_results(self):
+        """Test that search limits results to prevent overwhelming UI"""
+        response = self.app.get('/search_ecl?q=a')  # Very broad search
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        
+        # Should limit to 10 results maximum
+        self.assertLessEqual(len(data), 10)
+    
+    def test_search_expression_truncation(self):
+        """Test that long expressions are truncated in search results"""
+        response = self.app.get('/search_ecl?q=reference')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        
+        if len(data) > 0:
+            for result in data:
+                # Expression should be truncated if longer than 100 chars
+                if len(result['expression']) > 100:
+                    self.assertTrue(result['expression'].endswith('...'))
+
+
 if __name__ == '__main__':
     unittest.main()

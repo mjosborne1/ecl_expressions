@@ -69,6 +69,36 @@ def index():
     ecl_files = read_ecl_files()
     return render_template('index.html', ecl_files=ecl_files, tx_endpoint=TX_ENDPOINT)
 
+@app.route('/search_ecl', methods=['GET'])
+def search_ecl():
+    """Search ECL expressions and return matching results"""
+    query = request.args.get('q', '').strip().lower()
+    
+    if not query or len(query) < 2:
+        return jsonify([])
+    
+    ecl_files = read_ecl_files()
+    matching_results = []
+    
+    for ecl_file in ecl_files:
+        # Search in filename, description, and expression
+        searchable_text = f"{ecl_file['filename']} {ecl_file['description']} {ecl_file['expression']}".lower()
+        
+        if query in searchable_text:
+            matching_results.append({
+                'filename': ecl_file['filename'],
+                'description': ecl_file['description'],
+                'category': ecl_file['category'],
+                'expression': ecl_file['expression'][:100] + ('...' if len(ecl_file['expression']) > 100 else ''),  # Truncate for preview
+                'match_score': searchable_text.count(query)  # Simple relevance scoring
+            })
+    
+    # Sort by relevance (match score) and then by filename
+    matching_results.sort(key=lambda x: (-x['match_score'], x['filename']))
+    
+    # Limit results to prevent overwhelming the UI
+    return jsonify(matching_results[:10])
+
 @app.route('/test_ecl', methods=['POST'])
 def test_ecl():
     """Test an ECL expression using the fetcher"""

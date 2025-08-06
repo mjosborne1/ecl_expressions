@@ -29,6 +29,115 @@
             margin-bottom: 20px;
             font-family: monospace;
         }
+        
+        /* Search Box Styles */
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .search-box {
+            width: 100%;
+            padding: 12px 40px 12px 16px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: #4caf50;
+        }
+        .clear-search {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #666;
+            cursor: pointer;
+            display: none;
+        }
+        .clear-search:hover {
+            color: #333;
+        }
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        .search-result-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .search-result-item:hover {
+            background-color: #f8f9fa;
+        }
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+        .search-result-filename {
+            font-weight: bold;
+            color: #4caf50;
+            margin-bottom: 4px;
+        }
+        .search-result-category {
+            display: inline-block;
+            background: #2196f3;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        .search-result-description {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 4px;
+        }
+        .search-result-expression {
+            font-family: monospace;
+            font-size: 12px;
+            color: #888;
+            background: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .no-results {
+            padding: 16px;
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        
+        /* Show All Button */
+        .show-all-button {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .show-all-button:hover {
+            background-color: #5a6268;
+        }
+        
+        /* ECL Expression Styles */
         .ecl-item {
             border: 1px solid #ddd;
             margin-bottom: 15px;
@@ -131,6 +240,11 @@
             font-style: italic;
             padding: 40px;
         }
+        
+        /* Filter styles */
+        .filtered-view {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -141,38 +255,171 @@
             <strong>Terminology Server:</strong> {{ tx_endpoint }}
         </div>
 
-        {% if ecl_files %}
-            {% for ecl in ecl_files %}
-            <div class="ecl-item">
-                <div class="ecl-header">
-                    <span class="ecl-filename">{{ ecl.filename }}</span>
-                    <span class="ecl-category">{{ ecl.category }}</span>
+        <div class="search-container">
+            <input type="text" id="searchBox" class="search-box" placeholder="Search ECL expressions by filename, description, or content..." autocomplete="off">
+            <button id="clearSearch" class="clear-search" title="Clear search">&times;</button>
+            <div id="searchResults" class="search-results"></div>
+        </div>
+        
+        <button id="showAllButton" class="show-all-button">Show All Expressions</button>
+
+        <div id="allExpressions">
+            {% if ecl_files %}
+                {% for ecl in ecl_files %}
+                <div class="ecl-item" data-filename="{{ ecl.filename }}" data-category="{{ ecl.category }}">
+                    <div class="ecl-header">
+                        <span class="ecl-filename">{{ ecl.filename }}</span>
+                        <span class="ecl-category">{{ ecl.category }}</span>
+                    </div>
+                    <div class="ecl-description">{{ ecl.description }}</div>
+                    <div class="ecl-expression">{{ ecl.expression }}</div>
+                    <div class="ecl-controls">
+                        <button class="test-button" 
+                                data-expression="{{ ecl.expression }}" 
+                                data-filename="{{ ecl.filename }}"
+                                onclick="testECL(this)">
+                            Test Expression
+                        </button>
+                        <div class="result" id="result-{{ loop.index }}"></div>
+                    </div>
+                    <div class="concepts-container" id="concepts-{{ loop.index }}">
+                        <div class="concepts-label">Sampled Results:</div>
+                        <textarea class="concepts-box" id="concepts-box-{{ loop.index }}" readonly></textarea>
+                    </div>
                 </div>
-                <div class="ecl-description">{{ ecl.description }}</div>
-                <div class="ecl-expression">{{ ecl.expression }}</div>
-                <div class="ecl-controls">
-                    <button class="test-button" 
-                            data-expression="{{ ecl.expression }}" 
-                            data-filename="{{ ecl.filename }}"
-                            onclick="testECL(this)">
-                        Test Expression
-                    </button>
-                    <div class="result" id="result-{{ loop.index }}"></div>
+                {% endfor %}
+            {% else %}
+                <div class="no-files">
+                    No ECL files found in the ecl_library directory.
                 </div>
-                <div class="concepts-container" id="concepts-{{ loop.index }}">
-                    <div class="concepts-label">Sampled Results:</div>
-                    <textarea class="concepts-box" id="concepts-box-{{ loop.index }}" readonly></textarea>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div class="no-files">
-                No ECL files found in the ecl_library directory.
-            </div>
-        {% endif %}
+            {% endif %}
+        </div>
+        
+        <div id="filteredExpressions" class="filtered-view"></div>
     </div>
 
     <script>
+        let searchTimeout;
+        const searchBox = document.getElementById('searchBox');
+        const searchResults = document.getElementById('searchResults');
+        const clearSearch = document.getElementById('clearSearch');
+        const showAllButton = document.getElementById('showAllButton');
+        const allExpressions = document.getElementById('allExpressions');
+        const filteredExpressions = document.getElementById('filteredExpressions');
+
+        // Search functionality
+        searchBox.addEventListener('input', function() {
+            const query = this.value.trim();
+            
+            if (query.length === 0) {
+                hideSearchResults();
+                clearSearch.style.display = 'none';
+                showAllExpressions();
+                return;
+            }
+            
+            clearSearch.style.display = 'block';
+            
+            if (query.length < 2) {
+                return;
+            }
+            
+            // Debounce search requests
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                performSearch(query);
+            }, 300);
+        });
+
+        searchBox.addEventListener('blur', function() {
+            // Hide results after a short delay to allow clicking on results
+            setTimeout(() => {
+                hideSearchResults();
+            }, 200);
+        });
+
+        clearSearch.addEventListener('click', function() {
+            searchBox.value = '';
+            hideSearchResults();
+            clearSearch.style.display = 'none';
+            showAllExpressions();
+        });
+
+        showAllButton.addEventListener('click', function() {
+            showAllExpressions();
+        });
+
+        function performSearch(query) {
+            fetch(`/search_ecl?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(results => {
+                    displaySearchResults(results);
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    hideSearchResults();
+                });
+        }
+
+        function displaySearchResults(results) {
+            if (results.length === 0) {
+                searchResults.innerHTML = '<div class="no-results">No matching expressions found</div>';
+            } else {
+                searchResults.innerHTML = results.map(result => `
+                    <div class="search-result-item" onclick="selectSearchResult('${result.filename}')">
+                        <div class="search-result-filename">${result.filename}</div>
+                        <span class="search-result-category">${result.category}</span>
+                        <div class="search-result-description">${result.description}</div>
+                        <div class="search-result-expression">${result.expression}</div>
+                    </div>
+                `).join('');
+            }
+            
+            searchResults.style.display = 'block';
+        }
+
+        function hideSearchResults() {
+            searchResults.style.display = 'none';
+        }
+
+        function selectSearchResult(filename) {
+            hideSearchResults();
+            
+            // Show only the selected expression
+            showFilteredExpressions([filename]);
+        }
+
+        function showFilteredExpressions(filenames) {
+            allExpressions.style.display = 'none';
+            showAllButton.style.display = 'block';
+            
+            // Clone matching expressions to filtered view
+            const containers = Array.from(document.querySelectorAll('.ecl-item'));
+            const matchingContainers = containers.filter(container => 
+                filenames.includes(container.dataset.filename)
+            );
+            
+            filteredExpressions.innerHTML = matchingContainers.map(container => 
+                container.outerHTML
+            ).join('');
+            
+            filteredExpressions.style.display = 'block';
+            
+            // Re-attach event listeners to cloned buttons
+            filteredExpressions.querySelectorAll('.test-button').forEach(button => {
+                button.onclick = () => testECL(button);
+            });
+        }
+
+        function showAllExpressions() {
+            allExpressions.style.display = 'block';
+            filteredExpressions.style.display = 'none';
+            showAllButton.style.display = 'none';
+            searchBox.value = '';
+            clearSearch.style.display = 'none';
+        }
+
+        // Test ECL functionality
         async function testECL(button) {
             const expression = button.dataset.expression;
             const filename = button.dataset.filename;
@@ -188,7 +435,7 @@
             button.textContent = 'Testing...';
             resultDiv.textContent = 'Loading...';
             resultDiv.className = 'result loading';
-            conceptsContainer.style.display = 'none';
+            if (conceptsContainer) conceptsContainer.style.display = 'none';
             
             try {
                 const response = await fetch('/test_ecl', {
@@ -209,28 +456,28 @@
                     resultDiv.className = 'result success';
                     
                     // Display the concepts if we have any
-                    if (data.concepts && data.concepts.length > 0) {
+                    if (data.concepts && data.concepts.length > 0 && conceptsBox) {
                         let conceptsText = '';
                         data.concepts.forEach(concept => {
                             conceptsText += `${concept.code} | ${concept.display}\n`;
                         });
                         conceptsBox.value = conceptsText;
-                        conceptsContainer.style.display = 'block';
-                    } else {
+                        if (conceptsContainer) conceptsContainer.style.display = 'block';
+                    } else if (conceptsBox) {
                         conceptsBox.value = 'No concepts returned';
-                        conceptsContainer.style.display = 'block';
+                        if (conceptsContainer) conceptsContainer.style.display = 'block';
                     }
                     
                 } else {
                     resultDiv.textContent = `Error: ${data.error}`;
                     resultDiv.className = 'result error';
-                    conceptsContainer.style.display = 'none';
+                    if (conceptsContainer) conceptsContainer.style.display = 'none';
                 }
                 
             } catch (error) {
                 resultDiv.textContent = `Network error: ${error.message}`;
                 resultDiv.className = 'result error';
-                conceptsContainer.style.display = 'none';
+                if (conceptsContainer) conceptsContainer.style.display = 'none';
             } finally {
                 // Reset button state
                 button.disabled = false;

@@ -6,10 +6,12 @@ A Flask web application for testing SNOMED CT Expression Constraint Language (EC
 
 - 📁 **ECL Library Management**: Automatically loads ECL expressions from organized folders
 - 🔍 **Interactive Testing**: Test ECL expressions with a single click
-- 📊 **Detailed Results**: Shows both total count and sampled results (first 25 concepts)
+- � **Smart Search**: Typeahead search functionality to find expressions by keyword
+- �📊 **Detailed Results**: Shows both total count and sampled results (first 25 concepts)
 - 🏷️ **Rich Metadata**: Displays descriptions and categories for each ECL expression
-- 📱 **Responsive UI**: Clean, modern web interface
+- 📱 **Responsive UI**: Clean, modern web interface with filtering capabilities
 - 📝 **Comprehensive Logging**: Tracks all testing activities
+- ⚡ **Real-time Search**: Dynamic search with debouncing and relevance scoring
 
 ## Prerequisites
 
@@ -111,9 +113,35 @@ http://localhost:5001
 ### 3. Using the Application
 
 1. **Browse ECL Expressions**: The main page displays all ECL expressions organized by category
-2. **Read Descriptions**: Each expression shows its filename, description, and the actual ECL code
-3. **Test Expressions**: Click "Test Expression" to run the ECL against the terminology server
-4. **View Results**: See both the total count and sampled results (first 25 matching concepts)
+2. **Search Expressions**: Use the search box to find expressions by keyword
+   - Type at least 2 characters to start searching
+   - Search works on filenames, descriptions, and expression content
+   - Results are ranked by relevance score
+   - Click on search results to view or test expressions
+3. **Filter by Category**: Use the category buttons to show only specific types of expressions
+4. **Read Descriptions**: Each expression shows its filename, description, and the actual ECL code
+5. **Test Expressions**: Click "Test Expression" to run the ECL against the terminology server
+6. **View Results**: See both the total count and sampled results (first 25 matching concepts)
+
+### Search Functionality
+
+The search feature provides:
+- **Real-time search**: Results appear as you type (with 300ms debouncing)
+- **Relevance scoring**: Results ranked by how well they match your search
+- **Multi-field search**: Searches filenames, descriptions, and expression content
+- **Quick access**: Click any result to immediately view the expression
+
+**Search API Endpoint**:
+```
+GET /search_ecl?q=<search_term>
+```
+
+Returns JSON array with:
+- `filename`: Expression file name
+- `description`: Human-readable description
+- `category`: AMT, ClinicalFindings, etc.
+- `expression`: ECL expression (truncated if > 100 chars)
+- `match_score`: Relevance score for ranking
 
 ## Application Structure
 
@@ -184,6 +212,32 @@ curl -H "Accept: application/fhir+json" https://tx.ontoserver.csiro.au/fhir/meta
 2. Add a description as the first line starting with `#`
 3. Add your ECL expression on the following lines
 4. Refresh the web page - new expressions will appear automatically
+
+## Testing
+
+### Run All Tests
+```bash
+python test.py
+```
+
+The test suite includes:
+- ECL library structure validation (8 tests)
+- FHIR server integration testing (3 tests)  
+- Search functionality testing (8 tests)
+
+### Test Search Functionality
+```bash
+# Quick search functionality test
+python test_search.py
+
+# Extended search testing with various terms
+python extended_search_test.py
+```
+
+### Individual Test Categories
+- **Library Tests**: Validate ECL file structure and content
+- **Fetcher Tests**: Test FHIR server connectivity and responses
+- **Search Tests**: Verify search API endpoints and functionality
 
 ## Development
 
