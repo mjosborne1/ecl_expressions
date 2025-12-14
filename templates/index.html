@@ -268,6 +268,109 @@
             text-align: center;
             margin-bottom: 15px;
         }
+        
+        /* Custom Expression Tester Styles */
+        .custom-expression-section {
+            background-color: #f9f9f9;
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .custom-expression-section h3 {
+            margin-top: 0;
+            color: #4caf50;
+        }
+        .custom-ecl-textarea {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+            resize: vertical;
+        }
+        .custom-ecl-textarea:focus {
+            outline: none;
+            border-color: #4caf50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+        .custom-expression-button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .custom-expression-button:hover {
+            background-color: #45a049;
+        }
+        .custom-expression-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        /* Endpoint Settings Styles */
+        .endpoint-settings {
+            background-color: #e8f5e9;
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .endpoint-settings h3 {
+            margin-top: 0;
+            color: #2e7d32;
+        }
+        .endpoint-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        .endpoint-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            box-sizing: border-box;
+        }
+        .endpoint-input:focus {
+            outline: none;
+            border-color: #4caf50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+        .endpoint-button {
+            background-color: #2e7d32;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .endpoint-button:hover {
+            background-color: #1b5e20;
+        }
+        .endpoint-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .endpoint-status {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+        .endpoint-status.success {
+            color: #2e7d32;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -284,8 +387,32 @@
             </a>
         </div>
         
-        <div class="endpoint-info">
-            <strong>Terminology Server:</strong> {{ tx_endpoint }}
+        <!-- Endpoint Settings Section -->
+        <div class="endpoint-settings">
+            <h3>⚙️ Terminology Server Settings</h3>
+            <div id="endpointViewMode">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div><strong>Current Endpoint:</strong> <span id="endpointDisplay">{{ tx_endpoint }}</span></div>
+                    <button id="editEndpointButton" class="endpoint-button">Edit Endpoint</button>
+                </div>
+            </div>
+            <div id="endpointEditMode" style="display: none;">
+                <div class="endpoint-input-group">
+                    <input type="text" id="endpointInput" class="endpoint-input" placeholder="Enter terminology server endpoint URL..." value="">
+                    <button id="saveEndpointButton" class="endpoint-button">Save for Session</button>
+                    <button id="cancelEndpointButton" class="endpoint-button" style="background-color: #999;">Cancel</button>
+                    <button id="resetEndpointButton" class="endpoint-button" style="background-color: #f44336;">Reset to Default</button>
+                </div>
+            </div>
+            <div id="endpointStatus" class="endpoint-status"></div>
+        </div>
+
+        <!-- Custom Expression Tester Section -->
+        <div class="custom-expression-section">
+            <h3>🧪 Test Custom ECL Expression</h3>
+            <textarea id="customEclInput" class="custom-ecl-textarea" placeholder="Paste or type an ECL expression here..."></textarea>
+            <button id="testCustomButton" class="custom-expression-button">Test Expression</button>
+            <div id="customResult" style="margin-top: 10px;"></div>
         </div>
 
         <div class="search-container">
@@ -461,6 +588,7 @@
         async function testECL(button) {
             const expression = button.dataset.expression;
             const filename = button.dataset.filename;
+            const endpoint = getActiveEndpoint();
             const resultDiv = button.parentElement.querySelector('.result');
             
             // Find the concepts container and text box
@@ -483,7 +611,8 @@
                     },
                     body: JSON.stringify({
                         expression: expression,
-                        filename: filename
+                        filename: filename,
+                        endpoint: endpoint
                     })
                 });
                 
@@ -522,6 +651,152 @@
                 button.textContent = 'Test Expression';
             }
         }
+
+        // ============ Endpoint Settings Functionality ============
+        const endpointInput = document.getElementById('endpointInput');
+        const editEndpointButton = document.getElementById('editEndpointButton');
+        const saveEndpointButton = document.getElementById('saveEndpointButton');
+        const cancelEndpointButton = document.getElementById('cancelEndpointButton');
+        const resetEndpointButton = document.getElementById('resetEndpointButton');
+        const endpointStatus = document.getElementById('endpointStatus');
+        const endpointDisplay = document.getElementById('endpointDisplay');
+        const endpointViewMode = document.getElementById('endpointViewMode');
+        const endpointEditMode = document.getElementById('endpointEditMode');
+        const defaultEndpoint = '{{ tx_endpoint }}';
+        
+        // Load saved endpoint from localStorage on page load
+        function loadEndpoint() {
+            const saved = localStorage.getItem('customEndpoint');
+            if (saved) {
+                endpointInput.value = saved;
+                endpointDisplay.textContent = saved;
+            } else {
+                endpointInput.value = defaultEndpoint;
+                endpointDisplay.textContent = defaultEndpoint;
+            }
+        }
+        
+        // Show edit mode
+        editEndpointButton.addEventListener('click', function() {
+            // Set input to current endpoint value
+            endpointInput.value = endpointDisplay.textContent;
+            endpointViewMode.style.display = 'none';
+            endpointEditMode.style.display = 'block';
+            endpointInput.focus();
+        });
+        
+        // Cancel edit mode
+        cancelEndpointButton.addEventListener('click', function() {
+            endpointEditMode.style.display = 'none';
+            endpointViewMode.style.display = 'block';
+            endpointStatus.textContent = '';
+        });
+        
+        // Save endpoint to localStorage
+        saveEndpointButton.addEventListener('click', function() {
+            const endpoint = endpointInput.value.trim();
+            if (!endpoint) {
+                showEndpointStatus('Please enter a valid endpoint URL', false);
+                return;
+            }
+            
+            localStorage.setItem('customEndpoint', endpoint);
+            endpointDisplay.textContent = endpoint;
+            endpointEditMode.style.display = 'none';
+            endpointViewMode.style.display = 'block';
+            showEndpointStatus('✓ Endpoint saved for this session!', true);
+            console.log('Endpoint saved:', endpoint);
+        });
+        
+        // Reset to default endpoint
+        resetEndpointButton.addEventListener('click', function() {
+            localStorage.removeItem('customEndpoint');
+            endpointInput.value = defaultEndpoint;
+            endpointDisplay.textContent = defaultEndpoint;
+            endpointEditMode.style.display = 'none';
+            endpointViewMode.style.display = 'block';
+            showEndpointStatus('✓ Reset to default endpoint', true);
+        });
+        
+        function showEndpointStatus(message, success) {
+            endpointStatus.textContent = message;
+            endpointStatus.className = success ? 'endpoint-status success' : 'endpoint-status';
+            setTimeout(() => {
+                endpointStatus.textContent = '';
+            }, 3000);
+        }
+        
+        function getActiveEndpoint() {
+            const saved = localStorage.getItem('customEndpoint');
+            return saved || defaultEndpoint;
+        }
+
+        // ============ Custom Expression Tester Functionality ============
+        const customEclInput = document.getElementById('customEclInput');
+        const testCustomButton = document.getElementById('testCustomButton');
+        const customResult = document.getElementById('customResult');
+        
+        testCustomButton.addEventListener('click', async function() {
+            const ecl = customEclInput.value.trim();
+            const endpoint = getActiveEndpoint();
+            
+            if (!ecl) {
+                customResult.innerHTML = '<div class="result error">Please enter an ECL expression</div>';
+                return;
+            }
+            
+            testCustomButton.disabled = true;
+            testCustomButton.textContent = 'Testing...';
+            customResult.innerHTML = '<div class="result loading">Testing expression...</div>';
+            
+            try {
+                const response = await fetch('/test_ecl', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        expression: ecl,
+                        filename: 'Custom Expression',
+                        endpoint: endpoint
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const total = data.total >= 0 ? data.total : 'N/A';
+                    const conceptCount = data.concepts ? data.concepts.length : 0;
+                    
+                    let resultsHtml = `<div class="result success">✓ Success! Total concepts: ${total}</div>`;
+                    
+                    if (data.concepts && data.concepts.length > 0) {
+                        resultsHtml += '<div style="margin-top: 10px;"><strong>Sample Results (first 25):</strong><div class="concepts-box">';
+                        resultsHtml += data.concepts.map(c => `<div style="margin-bottom: 4px;">${c.code} | ${c.display}</div>`).join('');
+                        resultsHtml += '</div></div>';
+                    }
+                    
+                    customResult.innerHTML = resultsHtml;
+                } else {
+                    customResult.innerHTML = `<div class="result error">Error: ${data.error || 'Unknown error'}</div>`;
+                }
+            } catch (error) {
+                customResult.innerHTML = `<div class="result error">Network error: ${error.message}</div>`;
+            } finally {
+                testCustomButton.disabled = false;
+                testCustomButton.textContent = 'Test Expression';
+            }
+        });
+        
+        // Allow Enter key in textarea to test
+        customEclInput.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                testCustomButton.click();
+            }
+        });
+        
+        // Initialize endpoint on page load
+        window.addEventListener('DOMContentLoaded', loadEndpoint);
     </script>
 </body>
 </html>

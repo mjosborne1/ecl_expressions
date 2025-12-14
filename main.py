@@ -117,6 +117,7 @@ def test_ecl():
             
         ecl_expression = request.json.get('expression')
         filename = request.json.get('filename')
+        endpoint = request.json.get('endpoint', TX_ENDPOINT)  # Use custom endpoint if provided, otherwise use default
         
         if not ecl_expression:
             return jsonify({
@@ -124,10 +125,10 @@ def test_ecl():
                 'error': 'ECL expression is required'
             }), 400
         
-        logger.info(f'Testing ECL expression from {filename}')
+        logger.info(f'Testing ECL expression from {filename} using endpoint: {endpoint}')
         
-        # Call the fetcher function
-        result = fetcher.expand_valueset(TX_ENDPOINT, ecl_expression, 25)
+        # Call the fetcher function with the specified endpoint
+        result = fetcher.expand_valueset(endpoint, ecl_expression, 25)
         
         logger.info(f'ECL test result for {filename}: {result}')
         
