@@ -11,8 +11,8 @@ load_dotenv()
 app = Flask(__name__)
 
 # Configuration
-TX_ENDPOINT = os.getenv("TX_ENDPOINT")
-LOGFILE_NAME = os.getenv("LOGFILENAME")
+TX_ENDPOINT = os.getenv("TX_ENDPOINT", "https://tx.ontoserver.csiro.au/fhir")
+LOGFILE_NAME = os.getenv("LOGFILENAME", "./logs/ecl.log")
 
 # Ensure logs directory exists
 log_dir = os.path.dirname(LOGFILE_NAME)
