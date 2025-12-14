@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: ecl-expressions
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: ./build.sh
+    startCommand: python main.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.1
+      - key: TX_ENDPOINT
+        value: https://tx.ontoserver.csiro.au/fhir
+      - key: LOGFILENAME
+        value: ./logs/ecl.log

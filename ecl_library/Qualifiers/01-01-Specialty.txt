@@ -1,0 +1,2 @@
+# Show Specialties with a description matching the term `ultra`
+<< 394733009|Medical speciality| {{ D term = "ultra"}} 

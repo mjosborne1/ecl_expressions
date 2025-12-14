@@ -14,6 +14,11 @@ app = Flask(__name__)
 TX_ENDPOINT = os.getenv("TX_ENDPOINT")
 LOGFILE_NAME = os.getenv("LOGFILENAME")
 
+# Ensure logs directory exists
+log_dir = os.path.dirname(LOGFILE_NAME)
+if log_dir and not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
 # Setup logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename=LOGFILE_NAME, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -142,5 +147,9 @@ def test_ecl():
         }), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    # Use PORT from environment (for render.com) or default to 5001 for local development
+    port = int(os.getenv('PORT', 5001))
+    # Disable debug mode in production (when PORT is set by render.com)
+    debug = os.getenv('PORT') is None
+    app.run(debug=debug, host='0.0.0.0', port=port)
    

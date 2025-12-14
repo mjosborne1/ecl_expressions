@@ -1,0 +1,19 @@
+# Render.com ignore file - exclude these from deployment
+.venv
+.venv/
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.coverage
+htmlcov
+.git
+.gitignore
+.DS_Store
+*.md
+!README.md
+test.py
+test_*.py
+extended_search_test.py
+SEARCH_IMPLEMENTATION.md
