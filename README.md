@@ -95,7 +95,14 @@ ecl_library/
 411116001 |Has manufactured dose form| = << 129011000036109 |Injection|
 ```
 
-## Running the Application
+## Running it online
+
+Open your web browser and navigate to:
+```
+https://ecl-tester.onrender.com
+```
+
+## Running the Application Locally
 
 ### 1. Start the Flask Application
 
