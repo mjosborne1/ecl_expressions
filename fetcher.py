@@ -28,10 +28,38 @@ def expand_valueset(vs_endpoint, ecl_expr, count):
     vsexp=vs_endpoint+'/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/'
     query=vsexp+parse.quote(ecl_expr,safe='')
     query = f"{query}&count={count}"
-    command = ['curl', '-H "Accept: application/fhir+json" ' , '--location', query]
+    command = ['curl', '-H', 'Accept: application/fhir+json', '--location', query]
     
     result = subprocess.run(command, capture_output=True)
-    data =  json.loads(result.stdout)
+    
+    # Log the response for debugging
+    if result.returncode != 0:
+        logger.error(f'Curl command failed with return code {result.returncode}')
+        logger.error(f'stderr: {result.stderr.decode()}')
+        return {
+            'total': -1,
+            'concepts': [],
+            'error': f'API request failed: {result.stderr.decode()}'
+        }
+    
+    if not result.stdout:
+        logger.error('Empty response from FHIR server')
+        return {
+            'total': -1,
+            'concepts': [],
+            'error': 'Empty response from FHIR server'
+        }
+    
+    try:
+        data = json.loads(result.stdout)
+    except json.JSONDecodeError as e:
+        logger.error(f'Failed to parse JSON response: {e}')
+        logger.error(f'Response content: {result.stdout.decode()[:500]}')
+        return {
+            'total': -1,
+            'concepts': [],
+            'error': f'Invalid JSON response: {str(e)}'
+        }
     
     try:
         # Get total count
