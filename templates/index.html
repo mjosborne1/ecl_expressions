@@ -181,8 +181,14 @@
         .ecl-controls {
             padding: 10px;
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
+            gap: 10px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-right: 30px;
         }
         .test-button {
             background-color: #4caf50;
@@ -199,6 +205,36 @@
         .test-button:disabled {
             background-color: #ccc;
             cursor: not-allowed;
+        }
+        .copy-ecl-button {
+            background-color: #9c27b0;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .copy-ecl-button:hover {
+            background-color: #7b1fa2;
+        }
+        .copy-ecl-button.copied {
+            background-color: #4caf50;
+        }
+        .copy-valueset-button {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .copy-valueset-button:hover {
+            background-color: #0b7dda;
+        }
+        .copy-valueset-button.copied {
+            background-color: #4caf50;
         }
         .result {
             margin-left: 15px;
@@ -411,7 +447,11 @@
         <div class="custom-expression-section">
             <h3>🧪 Test Custom ECL Expression</h3>
             <textarea id="customEclInput" class="custom-ecl-textarea" placeholder="Paste or type an ECL expression here..."></textarea>
-            <button id="testCustomButton" class="custom-expression-button">Test Expression</button>
+            <div style="display: flex; gap: 10px;">
+                <button id="testCustomButton" class="custom-expression-button">Test Expression</button>
+                <button id="copyCustomEclButton" class="copy-ecl-button" style="display: none;">Copy ECL</button>
+                <button id="copyCustomUrlButton" class="copy-valueset-button" style="display: none;">Copy ValueSet URL</button>
+            </div>
             <div id="customResult" style="margin-top: 10px;"></div>
         </div>
 
@@ -434,12 +474,24 @@
                     <div class="ecl-description">{{ ecl.description }}</div>
                     <div class="ecl-expression">{{ ecl.expression }}</div>
                     <div class="ecl-controls">
-                        <button class="test-button" 
-                                data-expression="{{ ecl.expression }}" 
-                                data-filename="{{ ecl.filename }}"
-                                onclick="testECL(this)">
-                            Test Expression
-                        </button>
+                        <div class="button-group">
+                            <button class="test-button" 
+                                    data-expression="{{ ecl.expression }}" 
+                                    data-filename="{{ ecl.filename }}"
+                                    onclick="testECL(this)">
+                                Test Expression
+                            </button>
+                            <button class="copy-ecl-button" 
+                                    data-expression="{{ ecl.expression }}"
+                                    onclick="copyEcl(this)">
+                                Copy ECL
+                            </button>
+                            <button class="copy-valueset-button" 
+                                    data-expression="{{ ecl.expression }}"
+                                    onclick="copyValueSetUrl(this)">
+                                Copy ValueSet URL
+                            </button>
+                        </div>
                         <div class="result" id="result-{{ loop.index }}"></div>
                     </div>
                     <div class="concepts-container" id="concepts-{{ loop.index }}">
@@ -599,8 +651,10 @@
             // Update UI to show loading state
             button.disabled = true;
             button.textContent = 'Testing...';
-            resultDiv.textContent = 'Loading...';
-            resultDiv.className = 'result loading';
+            if (resultDiv) {
+                resultDiv.textContent = 'Loading...';
+                resultDiv.className = 'result loading';
+            }
             if (conceptsContainer) conceptsContainer.style.display = 'none';
             
             try {
@@ -621,16 +675,22 @@
                 if (data.success) {
                     // Check if there's an error in the result (invalid ECL)
                     if (data.error) {
-                        resultDiv.textContent = `Error: ${data.error}`;
-                        resultDiv.className = 'result error';
+                        if (resultDiv) {
+                            resultDiv.textContent = `Error: ${data.error}`;
+                            resultDiv.className = 'result error';
+                        }
                         if (conceptsContainer) conceptsContainer.style.display = 'none';
                     } else if (data.total === -1) {
-                        resultDiv.textContent = `Error: Invalid ECL expression or no results`;
-                        resultDiv.className = 'result error';
+                        if (resultDiv) {
+                            resultDiv.textContent = `Error: Invalid ECL expression or no results`;
+                            resultDiv.className = 'result error';
+                        }
                         if (conceptsContainer) conceptsContainer.style.display = 'none';
                     } else {
-                        resultDiv.textContent = `Total: ${data.total} concepts`;
-                        resultDiv.className = 'result success';
+                        if (resultDiv) {
+                            resultDiv.textContent = `Total: ${data.total} concepts`;
+                            resultDiv.className = 'result success';
+                        }
                         
                         // Display the concepts if we have any
                         if (data.concepts && data.concepts.length > 0 && conceptsBox) {
@@ -647,20 +707,111 @@
                     }
                     
                 } else {
-                    resultDiv.textContent = `Error: ${data.error}`;
-                    resultDiv.className = 'result error';
+                    if (resultDiv) {
+                        resultDiv.textContent = `Error: ${data.error}`;
+                        resultDiv.className = 'result error';
+                    }
                     if (conceptsContainer) conceptsContainer.style.display = 'none';
                 }
                 
             } catch (error) {
-                resultDiv.textContent = `Network error: ${error.message}`;
-                resultDiv.className = 'result error';
+                if (resultDiv) {
+                    resultDiv.textContent = `Network error: ${error.message}`;
+                    resultDiv.className = 'result error';
+                }
                 if (conceptsContainer) conceptsContainer.style.display = 'none';
             } finally {
                 // Reset button state
                 button.disabled = false;
                 button.textContent = 'Test Expression';
             }
+        }
+
+        // ============ Clipboard Helper Function ============
+        function copyToClipboard(text) {
+            // Try modern Clipboard API first
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(text);
+            }
+            
+            // Fallback for older browsers or insecure contexts
+            return new Promise((resolve, reject) => {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                
+                try {
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    if (successful) {
+                        resolve();
+                    } else {
+                        reject(new Error('Copy command failed'));
+                    }
+                } catch (err) {
+                    document.body.removeChild(textarea);
+                    reject(err);
+                }
+            });
+        }
+
+        // ============ Copy ECL Functionality ============
+        function copyEcl(button) {
+            const expression = button.dataset.expression;
+            
+            if (!expression) {
+                alert('No ECL expression found');
+                return;
+            }
+            
+            // Copy plain ECL expression to clipboard
+            copyToClipboard(expression).then(() => {
+                // Show success feedback
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy ECL to clipboard');
+            });
+        }
+
+        // ============ Copy ValueSet URL Functionality ============
+        function copyValueSetUrl(button) {
+            const expression = button.dataset.expression;
+            
+            if (!expression) {
+                alert('No ECL expression found');
+                return;
+            }
+            
+            // URL encode the ECL expression
+            const encodedExpression = encodeURIComponent(expression);
+            const valuesetUrl = `http://snomed.info/sct?fhir_vs=ecl/${encodedExpression}`;
+            
+            // Copy to clipboard
+            copyToClipboard(valuesetUrl).then(() => {
+                // Show success feedback
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy URL to clipboard');
+            });
         }
 
         // ============ Endpoint Settings Functionality ============
@@ -745,6 +896,8 @@
         // ============ Custom Expression Tester Functionality ============
         const customEclInput = document.getElementById('customEclInput');
         const testCustomButton = document.getElementById('testCustomButton');
+        const copyCustomEclButton = document.getElementById('copyCustomEclButton');
+        const copyCustomUrlButton = document.getElementById('copyCustomUrlButton');
         const customResult = document.getElementById('customResult');
         
         testCustomButton.addEventListener('click', async function() {
@@ -753,12 +906,16 @@
             
             if (!ecl) {
                 customResult.innerHTML = '<div class="result error">Please enter an ECL expression</div>';
+                copyCustomEclButton.style.display = 'none';
+                copyCustomUrlButton.style.display = 'none';
                 return;
             }
             
             testCustomButton.disabled = true;
             testCustomButton.textContent = 'Testing...';
             customResult.innerHTML = '<div class="result loading">Testing expression...</div>';
+            copyCustomEclButton.style.display = 'none';
+            copyCustomUrlButton.style.display = 'none';
             
             try {
                 const response = await fetch('/test_ecl', {
@@ -779,8 +936,12 @@
                     // Check if there's an error in the result (invalid ECL)
                     if (data.error) {
                         customResult.innerHTML = `<div class="result error">Error: ${data.error}</div>`;
+                        copyCustomEclButton.style.display = 'none';
+                        copyCustomUrlButton.style.display = 'none';
                     } else if (data.total === -1) {
                         customResult.innerHTML = `<div class="result error">Error: Invalid ECL expression or no results</div>`;
+                        copyCustomEclButton.style.display = 'none';
+                        copyCustomUrlButton.style.display = 'none';
                     } else {
                         const total = data.total >= 0 ? data.total : 'N/A';
                         let resultsHtml = `<div class="result success">✓ Success! Total concepts: ${total}</div>`;
@@ -792,16 +953,79 @@
                         }
                         
                         customResult.innerHTML = resultsHtml;
+                        // Show copy buttons only on successful test
+                        copyCustomEclButton.style.display = 'inline-block';
+                        copyCustomUrlButton.style.display = 'inline-block';
                     }
                 } else {
                     customResult.innerHTML = `<div class="result error">Error: ${data.error || 'Unknown error'}</div>`;
+                    copyCustomEclButton.style.display = 'none';
+                    copyCustomUrlButton.style.display = 'none';
                 }
             } catch (error) {
                 customResult.innerHTML = `<div class="result error">Network error: ${error.message}</div>`;
+                copyCustomEclButton.style.display = 'none';
+                copyCustomUrlButton.style.display = 'none';
             } finally {
                 testCustomButton.disabled = false;
                 testCustomButton.textContent = 'Test Expression';
             }
+        });
+        
+        // Copy ECL for custom expression
+        copyCustomEclButton.addEventListener('click', function() {
+            const expression = customEclInput.value.trim();
+            
+            if (!expression) {
+                alert('No ECL expression found');
+                return;
+            }
+            
+            // Copy plain ECL expression to clipboard
+            copyToClipboard(expression).then(() => {
+                // Show success feedback
+                const originalText = copyCustomEclButton.textContent;
+                copyCustomEclButton.textContent = '✓ Copied!';
+                copyCustomEclButton.classList.add('copied');
+                
+                setTimeout(() => {
+                    copyCustomEclButton.textContent = originalText;
+                    copyCustomEclButton.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy ECL to clipboard');
+            });
+        });
+        
+        // Copy ValueSet URL for custom expression
+        copyCustomUrlButton.addEventListener('click', function() {
+            const expression = customEclInput.value.trim();
+            
+            if (!expression) {
+                alert('No ECL expression found');
+                return;
+            }
+            
+            // URL encode the ECL expression
+            const encodedExpression = encodeURIComponent(expression);
+            const valuesetUrl = `http://snomed.info/sct?fhir_vs=ecl/${encodedExpression}`;
+            
+            // Copy to clipboard
+            copyToClipboard(valuesetUrl).then(() => {
+                // Show success feedback
+                const originalText = copyCustomUrlButton.textContent;
+                copyCustomUrlButton.textContent = '✓ Copied!';
+                copyCustomUrlButton.classList.add('copied');
+                
+                setTimeout(() => {
+                    copyCustomUrlButton.textContent = originalText;
+                    copyCustomUrlButton.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy URL to clipboard');
+            });
         });
         
         // Allow Enter key in textarea to test

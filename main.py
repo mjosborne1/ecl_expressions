@@ -68,6 +68,11 @@ def read_ecl_files():
     
     return ecl_files
 
+@app.route('/favicon.ico')
+def favicon():
+    """Return empty response for favicon to prevent 404 errors"""
+    return '', 204
+
 @app.route('/')
 def index():
     """Main page displaying all ECL expressions"""
@@ -152,5 +157,15 @@ if __name__ == '__main__':
     port = int(os.getenv('PORT', 5001))
     # Disable debug mode in production (when PORT is set by render.com)
     debug = os.getenv('PORT') is None
+    
+    print(f"\n{'='*60}")
+    print(f"🚀 ECL Expression Tester is starting...")
+    print(f"{'='*60}")
+    print(f"📡 Listening on: http://0.0.0.0:{port}")
+    print(f"🌐 Local access: http://localhost:{port}")
+    print(f"🔧 Debug mode: {'ON' if debug else 'OFF'}")
+    print(f"🔗 Terminology Server: {TX_ENDPOINT}")
+    print(f"{'='*60}\n")
+    
     app.run(debug=debug, host='0.0.0.0', port=port)
    

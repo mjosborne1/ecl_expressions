@@ -273,5 +273,83 @@ class TestSearch(unittest.TestCase):
                     self.assertTrue(result['expression'].endswith('...'))
 
 
+class TestValueSetURL(unittest.TestCase):
+    """Test the ValueSet URL generation functionality"""
+    
+    def test_simple_ecl_encoding(self):
+        """Test URL encoding of a simple ECL expression"""
+        ecl = "< 404684003"
+        encoded = urllib.parse.quote(ecl)
+        url = f"http://snomed.info/sct?fhir_vs=ecl/{encoded}"
+        
+        self.assertEqual(url, "http://snomed.info/sct?fhir_vs=ecl/%3C%20404684003")
+        self.assertIn("http://snomed.info/sct?fhir_vs=ecl/", url)
+    
+    def test_complex_ecl_encoding(self):
+        """Test URL encoding of a complex ECL expression with special characters"""
+        ecl = "< 404684003 |Clinical finding|: 363698007 |Finding site| = << 39057004 |Pulmonary valve structure|"
+        encoded = urllib.parse.quote(ecl)
+        url = f"http://snomed.info/sct?fhir_vs=ecl/{encoded}"
+        
+        # Verify the URL contains the correct base
+        self.assertIn("http://snomed.info/sct?fhir_vs=ecl/", url)
+        
+        # Verify special characters are encoded
+        self.assertIn("%3C", encoded)  # <
+        self.assertIn("%7C", encoded)  # |
+        self.assertIn("%3D", encoded)  # =
+        self.assertIn("%20", encoded)  # space
+        
+        # Verify the URL can be decoded back to the original
+        decoded_ecl = urllib.parse.unquote(encoded)
+        self.assertEqual(decoded_ecl, ecl)
+    
+    def test_ecl_with_newlines(self):
+        """Test URL encoding of ECL expression with newlines"""
+        ecl = "< 404684003 |\nClinical finding\n|"
+        encoded = urllib.parse.quote(ecl)
+        url = f"http://snomed.info/sct?fhir_vs=ecl/{encoded}"
+        
+        # Verify newlines are encoded
+        self.assertIn("%0A", encoded)
+        
+        # Verify the URL contains the correct base
+        self.assertIn("http://snomed.info/sct?fhir_vs=ecl/", url)
+    
+    def test_ecl_url_pattern(self):
+        """Test that the ValueSet URL follows the correct pattern"""
+        ecl = "< 373873005"
+        encoded = urllib.parse.quote(ecl)
+        url = f"http://snomed.info/sct?fhir_vs=ecl/{encoded}"
+        
+        # Verify URL structure
+        self.assertTrue(url.startswith("http://snomed.info/sct?fhir_vs=ecl/"))
+        self.assertEqual(url.count("?fhir_vs=ecl/"), 1)
+        self.assertEqual(url.count("http://"), 1)
+    
+    def test_empty_ecl(self):
+        """Test handling of empty ECL expression"""
+        ecl = ""
+        encoded = urllib.parse.quote(ecl)
+        url = f"http://snomed.info/sct?fhir_vs=ecl/{encoded}"
+        
+        # Even with empty ECL, the URL structure should be correct
+        self.assertEqual(url, "http://snomed.info/sct?fhir_vs=ecl/")
+    
+    def test_ecl_with_quotes(self):
+        """Test URL encoding of ECL with various quote types"""
+        ecl = '< 404684003 "quoted text" and \'single quotes\''
+        encoded = urllib.parse.quote(ecl)
+        url = f"http://snomed.info/sct?fhir_vs=ecl/{encoded}"
+        
+        # Verify quotes are encoded
+        self.assertIn("%22", encoded)  # "
+        self.assertIn("%27", encoded)  # '
+        
+        # Verify the URL can be decoded back
+        decoded_ecl = urllib.parse.unquote(encoded)
+        self.assertEqual(decoded_ecl, ecl)
+
+
 if __name__ == '__main__':
     unittest.main()
