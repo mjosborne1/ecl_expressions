@@ -619,20 +619,31 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    resultDiv.textContent = `Total: ${data.total} concepts`;
-                    resultDiv.className = 'result success';
-                    
-                    // Display the concepts if we have any
-                    if (data.concepts && data.concepts.length > 0 && conceptsBox) {
-                        let conceptsText = '';
-                        data.concepts.forEach(concept => {
-                            conceptsText += `${concept.code} | ${concept.display}\n`;
-                        });
-                        conceptsBox.value = conceptsText;
-                        if (conceptsContainer) conceptsContainer.style.display = 'block';
-                    } else if (conceptsBox) {
-                        conceptsBox.value = 'No concepts returned';
-                        if (conceptsContainer) conceptsContainer.style.display = 'block';
+                    // Check if there's an error in the result (invalid ECL)
+                    if (data.error) {
+                        resultDiv.textContent = `Error: ${data.error}`;
+                        resultDiv.className = 'result error';
+                        if (conceptsContainer) conceptsContainer.style.display = 'none';
+                    } else if (data.total === -1) {
+                        resultDiv.textContent = `Error: Invalid ECL expression or no results`;
+                        resultDiv.className = 'result error';
+                        if (conceptsContainer) conceptsContainer.style.display = 'none';
+                    } else {
+                        resultDiv.textContent = `Total: ${data.total} concepts`;
+                        resultDiv.className = 'result success';
+                        
+                        // Display the concepts if we have any
+                        if (data.concepts && data.concepts.length > 0 && conceptsBox) {
+                            let conceptsText = '';
+                            data.concepts.forEach(concept => {
+                                conceptsText += `${concept.code} | ${concept.display}\n`;
+                            });
+                            conceptsBox.value = conceptsText;
+                            if (conceptsContainer) conceptsContainer.style.display = 'block';
+                        } else if (conceptsBox) {
+                            conceptsBox.value = 'No concepts returned';
+                            if (conceptsContainer) conceptsContainer.style.display = 'block';
+                        }
                     }
                     
                 } else {
@@ -765,18 +776,23 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    const total = data.total >= 0 ? data.total : 'N/A';
-                    const conceptCount = data.concepts ? data.concepts.length : 0;
-                    
-                    let resultsHtml = `<div class="result success">✓ Success! Total concepts: ${total}</div>`;
-                    
-                    if (data.concepts && data.concepts.length > 0) {
-                        resultsHtml += '<div style="margin-top: 10px;"><strong>Sample Results (first 25):</strong><div class="concepts-box">';
-                        resultsHtml += data.concepts.map(c => `<div style="margin-bottom: 4px;">${c.code} | ${c.display}</div>`).join('');
-                        resultsHtml += '</div></div>';
+                    // Check if there's an error in the result (invalid ECL)
+                    if (data.error) {
+                        customResult.innerHTML = `<div class="result error">Error: ${data.error}</div>`;
+                    } else if (data.total === -1) {
+                        customResult.innerHTML = `<div class="result error">Error: Invalid ECL expression or no results</div>`;
+                    } else {
+                        const total = data.total >= 0 ? data.total : 'N/A';
+                        let resultsHtml = `<div class="result success">✓ Success! Total concepts: ${total}</div>`;
+                        
+                        if (data.concepts && data.concepts.length > 0) {
+                            resultsHtml += '<div style="margin-top: 10px;"><strong>Sample Results (first 25):</strong><div class="concepts-box">';
+                            resultsHtml += data.concepts.map(c => `<div style="margin-bottom: 4px;">${c.code} | ${c.display}</div>`).join('');
+                            resultsHtml += '</div></div>';
+                        }
+                        
+                        customResult.innerHTML = resultsHtml;
                     }
-                    
-                    customResult.innerHTML = resultsHtml;
                 } else {
                     customResult.innerHTML = `<div class="result error">Error: ${data.error || 'Unknown error'}</div>`;
                 }

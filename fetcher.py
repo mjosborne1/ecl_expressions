@@ -61,6 +61,32 @@ def expand_valueset(vs_endpoint, ecl_expr, count):
             'error': f'Invalid JSON response: {str(e)}'
         }
     
+    # Check if the response is an OperationOutcome (error response)
+    if data.get('resourceType') == 'OperationOutcome':
+        # Extract error message from OperationOutcome
+        error_messages = []
+        issues = data.get('issue', [])
+        for issue in issues:
+            diagnostics = issue.get('diagnostics', '')
+            if diagnostics:
+                # Clean up the error message
+                clean_msg = diagnostics
+                # Remove "error: " prefix
+                if clean_msg.lower().startswith('error: '):
+                    clean_msg = clean_msg[7:]
+                # Remove GUID pattern [xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx]
+                import re
+                clean_msg = re.sub(r'\[[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}\]:\s*', '', clean_msg, flags=re.IGNORECASE)
+                error_messages.append(clean_msg)
+        
+        error_msg = '; '.join(error_messages) if error_messages else 'Invalid ECL expression'
+        logger.error(f'FHIR OperationOutcome: {error_msg}')
+        return {
+            'total': -1,
+            'concepts': [],
+            'error': error_msg
+        }
+    
     try:
         # Get total count
         total_result = evaluate(data,"expansion.total")
