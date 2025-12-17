@@ -1,6 +1,6 @@
 import os
 import glob
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 from dotenv import load_dotenv
 import logging
 import fetcher
@@ -8,7 +8,7 @@ import fetcher
 # Load environment variables from .env file
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 # Configuration
 TX_ENDPOINT = os.getenv("TX_ENDPOINT", "https://tx.ontoserver.csiro.au/fhir")
@@ -70,8 +70,8 @@ def read_ecl_files():
 
 @app.route('/favicon.ico')
 def favicon():
-    """Return empty response for favicon to prevent 404 errors"""
-    return '', 204
+    """Serve favicon from static directory"""
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @app.route('/')
 def index():
