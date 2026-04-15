@@ -1,0 +1,6 @@
+# No history of X (where X is a Clinical Finding)
+(<< 413350009 | Finding with explicit context| :
+  408729009 |Finding context| = << 410516002 | Known absent |,
+  408731000 |Temporal context | = << 410589000 |All times past|,
+  408732007 |Subject relationship context| = 410604004 |Subject of record|
+)

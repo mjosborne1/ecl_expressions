@@ -1,0 +1,6 @@
+# No history of X (where X is a Procedure)
+(<< 129125009 | Procedure with explicit context| :
+  408730004 |Procedure context| = 385660001 | Not done |,
+  408731000 |Temporal context | = << 410589000 |All times past|,
+  408732007 |Subject relationship context| = 410604004 |Subject of record|
+)
