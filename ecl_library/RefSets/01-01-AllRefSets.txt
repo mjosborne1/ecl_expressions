@@ -1,0 +1,5 @@
+# All Australian SCT AU RefSets
+<446609009 |Simple type reference set| {{C moduleId = 351000168100 |Third party reference set module| }} 
+OR 
+<446609009 |Simple type reference set| {{C moduleId = 32506021000036107 |SNOMED Clinical Terms Australian extension| }}
+
